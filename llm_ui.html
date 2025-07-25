@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 40px;
+      color: #2c3e50;
+    }
+
+    h2, h3 {
+      color: #34495e;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="file"],
+    textarea,
+    button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    #answer-box {
+      background: #ecf0f1;
+      padding: 15px;
+      margin-top: 20px;
+      border-left: 5px solid #3498db;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📄 Upload Document</h2>
+    <input type="file" id="docInput" accept=".pdf" />
+    <button onclick="uploadDoc()">Upload</button>
+
+    <h2>🔍 Ask a Question</h2>
+    <textarea id="question" rows="4" placeholder="E.g. What is the refund policy mentioned in the contract?"></textarea>
+    <button onclick="askLLM()">Submit</button>
+
+    <h3>💬 Answer</h3>
+    <div id="answer-box">Answer will appear here...</div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5000"; // Replace with deployed URL
+
+    async function uploadDoc() {
+      const fileInput = document.getElementById("docInput");
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select a file.");
+
+      const formData = new FormData();
+      formData.append("document", file);
+
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      alert(data.message || "Upload complete");
+    }
+
+    async function askLLM() {
+      const question = document.getElementById("question").value;
+      if (!question.trim()) return alert("Enter a question");
+
+      const res = await fetch(`${API_BASE}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: question })
+      });
+
+      const data = await res.json();
+      document.getElementById("answer-box").textContent =
+        data.answer + "\n\nSources:\n" + (data.sources || []).map(s => `- ${s.text}`).join("\n");
+    }
+  </script>
+</body>
+</html>
